@@ -18,4 +18,31 @@ spec:
         - name: nginx
           image: nginx:1.27
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              sed -i 's/listen       80;/listen       8080;/' /etc/nginx/conf.d/default.conf
+              sed -i 's|/var/cache/nginx|/tmp/nginx-cache|g' /etc/nginx/nginx.conf
+              sed -i 's|/var/run|/tmp|g' /etc/nginx/nginx.conf
+              exec nginx -g 'daemon off;'
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
